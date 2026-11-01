@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: gemma-4-ai-agent
+    env: python
+    buildCommand: pip install -r backend/requirements.txt
+    startCommand: python run.py
+    envVars:
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: MODEL_NAME
+        value: gemma-4-26b-a4b-it
+      - key: PORT
+        value: 10000
