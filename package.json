@@ -1,0 +1,13 @@
+{
+  "name": "gemma4-agent",
+  "version": "1.0.0",
+  "description": "[![Python](https://img.shields.io/badge/Python-3.10+-3776AB?logo=python&logoColor=white)](https://python.org) [![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com) [![Gemma 4](https://img.shields.io/badge/Gemma_4-12B--IT-4285F4?logo=google&logoColor=white)](https://ai.google.dev) [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs"
+}
