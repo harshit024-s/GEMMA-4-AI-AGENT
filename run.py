@@ -29,7 +29,7 @@ def main() -> None:
     print(
         "\n"
         "  ==========================================\n"
-        "             Gemma 4 AI Agent               \n"
+        "        J.A.R.V.I.S. Tactical AI Core       \n"
         "  ==========================================\n"
         f"    Bind:    http://{HOST}:{PORT}\n"
         f"    Open:    http://{display_host}:{PORT}\n"

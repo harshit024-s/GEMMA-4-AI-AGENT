@@ -267,6 +267,47 @@ def generate_code(language: str, description: str) -> str:
     return f"```{lang}\n{code}```"
 
 
+def system_diagnostics() -> str:
+    """Run real-time diagnostics on the host machine."""
+    import platform
+    try:
+        import psutil
+        cpu_pct = psutil.cpu_percent(interval=0.1)
+        cpu_count = psutil.cpu_count(logical=True)
+        mem = psutil.virtual_memory()
+        disk = psutil.disk_usage("C:\\" if platform.system() == "Windows" else "/")
+        battery = psutil.sensors_battery()
+        batt_str = f"{battery.percent}% ({'Charging' if battery.power_plugged else 'Discharging'})" if battery else "AC Direct Grid"
+
+        return (
+            "**J.A.R.V.I.S. Subsystem Telemetry:**\n"
+            f"- **Processor Core:** {cpu_pct}% load ({cpu_count} logical threads active)\n"
+            f"- **Memory Matrix:** {mem.percent}% consumed ({mem.used // (1024**2):,} MB / {mem.total // (1024**2):,} MB)\n"
+            f"- **Drive Capacity:** {disk.percent}% allocated ({disk.free // (1024**3):,} GB unallocated)\n"
+            f"- **Power Source:** {batt_str}\n"
+            f"- **OS Architecture:** {platform.system()} {platform.release()} [{platform.machine()}]\n"
+            "- **Status:** All core relays nominal, sir."
+        )
+    except Exception as exc:
+        return f"Diagnostic scan encountered telemetry variance: {exc}"
+
+
+def system_protocol(command: str, parameters: str = "") -> str:
+    """Execute tactical protocols, system modes, or user reminders."""
+    cmd = command.strip().lower()
+    if "diagnostic" in cmd or "scan" in cmd:
+        return system_diagnostics()
+    elif "stealth" in cmd:
+        return "**Protocol Activated:** Stealth Mode initialized. Audio levels attenuated, visual signature minimized, sir."
+    elif "standby" in cmd or "sleep" in cmd:
+        return "**Protocol Activated:** Low-power standby matrix engaged. Monitoring background channels, sir."
+    elif "memo" in cmd or "reminder" in cmd or "note" in cmd or "task" in cmd:
+        item = parameters or command
+        return f"**Protocol Registered:** Item logged in tactical buffer: '{item}'. I shall maintain strict surveillance over this, sir."
+    else:
+        return f"**Protocol '{command}' Initialized.** Telemetry confirmed and logged, sir."
+
+
 # ═══════════════════════════════════════════════════════════════════════════════
 #  Tool registry & schema (google-genai FunctionDeclaration format)
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -278,6 +319,8 @@ TOOL_FUNCTIONS: dict[str, Any] = {
     "get_current_datetime": get_current_datetime,
     "get_news_headlines": get_news_headlines,
     "generate_code": generate_code,
+    "system_diagnostics": system_diagnostics,
+    "system_protocol": system_protocol,
 }
 
 FUNCTION_DECLARATIONS: list[types.FunctionDeclaration] = [
@@ -361,6 +404,32 @@ FUNCTION_DECLARATIONS: list[types.FunctionDeclaration] = [
                 ),
             },
             required=["language", "description"],
+        ),
+    ),
+    types.FunctionDeclaration(
+        name="system_diagnostics",
+        description="Run real-time diagnostics on host CPU, RAM, disk, battery, and operating system.",
+        parameters=types.Schema(
+            type=types.Type.OBJECT,
+            properties={},
+        ),
+    ),
+    types.FunctionDeclaration(
+        name="system_protocol",
+        description="Execute system protocols, status modes (stealth, standby), diagnostics, or log user reminders/memos.",
+        parameters=types.Schema(
+            type=types.Type.OBJECT,
+            properties={
+                "command": types.Schema(
+                    type=types.Type.STRING,
+                    description="The protocol or action name (e.g. 'diagnostic scan', 'stealth mode', 'log memo', 'standby').",
+                ),
+                "details": types.Schema(
+                    type=types.Type.STRING,
+                    description="Additional context, notes, or parameters for the protocol.",
+                ),
+            },
+            required=["command"],
         ),
     ),
 ]

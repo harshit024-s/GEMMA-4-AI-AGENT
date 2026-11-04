@@ -3,46 +3,58 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Gemma 4 Agent</title>
+  <title>J.A.R.V.I.S. — Gemma 4 Tactical Interface</title>
   <link rel="stylesheet" href="/static/styles.css" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link
-    href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Google+Sans+Mono:wght@400;500&family=Inter:wght@400;500;600;700&display=swap"
+    href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"
     rel="stylesheet"
   />
 </head>
-<body>
-  <!-- ─── Sidebar ───────────────────────────────────────────────── -->
+<body class="jarvis-theme">
+  <!-- Background Grid & Scanning Overlay -->
+  <div class="hud-grid-overlay"></div>
+  <div class="hud-scanline"></div>
+
+  <!-- ─── Sidebar / Tactical Status Panel ───────────────────────── -->
   <aside id="sidebar" class="sidebar">
     <div class="sidebar-header">
       <div class="logo">
-        <svg class="gemma-icon" viewBox="0 0 32 32" width="28" height="28">
-          <circle cx="16" cy="16" r="14" fill="none" stroke="url(#grad)" stroke-width="2.5"/>
-          <circle cx="16" cy="10" r="3" fill="#4285F4"/>
-          <circle cx="10" cy="20" r="3" fill="#EA4335"/>
-          <circle cx="22" cy="20" r="3" fill="#34A853"/>
-          <line x1="16" y1="13" x2="10" y2="17" stroke="#FBBC05" stroke-width="1.5"/>
-          <line x1="16" y1="13" x2="22" y2="17" stroke="#FBBC05" stroke-width="1.5"/>
-          <line x1="10" y1="20" x2="22" y2="20" stroke="#FBBC05" stroke-width="1.5"/>
-          <defs>
-            <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stop-color="#4285F4"/>
-              <stop offset="33%" stop-color="#EA4335"/>
-              <stop offset="66%" stop-color="#FBBC05"/>
-              <stop offset="100%" stop-color="#34A853"/>
-            </linearGradient>
-          </defs>
-        </svg>
-        <span class="logo-text">Gemma 4 Agent</span>
+        <div class="mini-arc-reactor">
+          <div class="core-dot"></div>
+        </div>
+        <div class="logo-titles">
+          <span class="logo-text">J.A.R.V.I.S.</span>
+          <span class="logo-sub">Gemma 4 Tactical Core</span>
+        </div>
       </div>
-      <button id="new-chat-btn" class="btn-icon" title="New chat">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      <button id="new-chat-btn" class="btn-icon" title="Reset Session / Clear Buffer">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M3 21v-5h5"/></svg>
       </button>
     </div>
 
+    <!-- Live System Telemetry Widget -->
+    <div class="sidebar-section telemetry-section">
+      <h3 class="sidebar-title">System Telemetry</h3>
+      <div class="telemetry-badges">
+        <div class="telemetry-item">
+          <span class="telemetry-label">CORE ARCHITECTURE</span>
+          <span class="telemetry-val" id="model-badge">Gemma 4 MoE</span>
+        </div>
+        <div class="telemetry-item">
+          <span class="telemetry-label">SECURITY PROTOCOL</span>
+          <span class="telemetry-val text-cyan">MARK VII • ACTIVE</span>
+        </div>
+        <div class="telemetry-item">
+          <span class="telemetry-label">AUDIO SPEECH SYNTHESIS</span>
+          <span class="telemetry-val text-green" id="tts-status">ONLINE</span>
+        </div>
+      </div>
+    </div>
+
     <div class="sidebar-section">
-      <h3 class="sidebar-title">Available Tools</h3>
+      <h3 class="sidebar-title">Tactical Tool Protocols</h3>
       <ul id="tools-list" class="tools-list">
         <li class="tool-item loading-shimmer">&nbsp;</li>
         <li class="tool-item loading-shimmer">&nbsp;</li>
@@ -51,84 +63,135 @@
     </div>
 
     <div class="sidebar-section">
-      <h3 class="sidebar-title">Settings</h3>
+      <h3 class="sidebar-title">Voice & Reasoning Protocols</h3>
       <label class="toggle-row">
-        <span>Thinking mode</span>
+        <span>Audio Vocalization (TTS)</span>
+        <input type="checkbox" id="voice-toggle" checked />
+        <span class="toggle-switch"></span>
+      </label>
+      <label class="toggle-row">
+        <span>Deep Thinking (Reasoning)</span>
         <input type="checkbox" id="thinking-toggle" />
         <span class="toggle-switch"></span>
       </label>
       <label class="toggle-row">
-        <span>Streaming</span>
+        <span>Real-Time Stream Relay</span>
         <input type="checkbox" id="stream-toggle" checked />
         <span class="toggle-switch"></span>
       </label>
     </div>
 
     <div class="sidebar-footer">
+      <div class="stark-badge">STARK INDUSTRIES • AI DIVISION</div>
       <span class="powered-by">Powered by <strong>Google Gemma 4</strong></span>
     </div>
   </aside>
 
   <!-- ─── Mobile sidebar toggle ─────────────────────────────────── -->
-  <button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle sidebar">
+  <button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle Tactical Panel">
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
   </button>
 
-  <!-- ─── Main chat area ────────────────────────────────────────── -->
+  <!-- ─── Main HUD Interface ────────────────────────────────────── -->
   <main class="chat-main">
+    <!-- Top HUD Navigation Bar -->
+    <header class="hud-top-bar">
+      <div class="hud-status-indicator">
+        <span class="pulsing-beacon"></span>
+        <span class="hud-status-label" id="hud-status-text">SYSTEMS NOMINAL • ONLINE</span>
+      </div>
+
+      <!-- Real-time Equalizer Wave -->
+      <div class="audio-wave-visualizer" id="audio-visualizer">
+        <div class="bar"></div>
+        <div class="bar"></div>
+        <div class="bar"></div>
+        <div class="bar"></div>
+        <div class="bar"></div>
+        <div class="bar"></div>
+        <div class="bar"></div>
+        <div class="bar"></div>
+      </div>
+
+      <div class="hud-actions">
+        <button id="voice-mute-btn" class="hud-btn" title="Toggle Voice Output">
+          <span id="speaker-icon">🔊</span>
+        </button>
+      </div>
+    </header>
+
     <div id="chat-messages" class="chat-messages">
-      <!-- Welcome message -->
+      <!-- Arc Reactor Center Welcome Screen -->
       <div class="welcome-screen" id="welcome-screen">
-        <div class="welcome-icon">
-          <svg viewBox="0 0 64 64" width="64" height="64">
-            <circle cx="32" cy="32" r="28" fill="none" stroke="url(#wgrad)" stroke-width="3"/>
-            <circle cx="32" cy="20" r="5" fill="#4285F4"/>
-            <circle cx="20" cy="40" r="5" fill="#EA4335"/>
-            <circle cx="44" cy="40" r="5" fill="#34A853"/>
-            <line x1="32" y1="25" x2="20" y2="35" stroke="#FBBC05" stroke-width="2"/>
-            <line x1="32" y1="25" x2="44" y2="35" stroke="#FBBC05" stroke-width="2"/>
-            <line x1="20" y1="40" x2="44" y2="40" stroke="#FBBC05" stroke-width="2"/>
-            <defs>
-              <linearGradient id="wgrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stop-color="#4285F4"/>
-                <stop offset="33%" stop-color="#EA4335"/>
-                <stop offset="66%" stop-color="#FBBC05"/>
-                <stop offset="100%" stop-color="#34A853"/>
-              </linearGradient>
-            </defs>
-          </svg>
+        <div class="arc-reactor-container" id="arc-reactor">
+          <div class="arc-ring-outer"></div>
+          <div class="arc-ring-inner"></div>
+          <div class="arc-core">
+            <div class="arc-core-pulse"></div>
+            <div class="arc-core-inner"></div>
+          </div>
+          <div class="arc-tech-accents">
+            <span></span><span></span><span></span><span></span>
+          </div>
         </div>
-        <h1 class="welcome-title">Hello! I'm <span class="gradient-text">Gemma Agent</span></h1>
-        <p class="welcome-sub">Powered by Google's Gemma 4 model with tool-calling capabilities.</p>
+
+        <h1 class="welcome-title">J.A.R.V.I.S.</h1>
+        <p class="welcome-sub">Just A Rather Very Intelligent System • Gemma 4 Tactical Core</p>
+        <p class="welcome-prompt-status" id="reactor-status-msg">At your service, sir. How may I assist you today?</p>
+
         <div class="welcome-chips">
-          <button class="chip" data-prompt="What's the weather like in Tokyo right now?">🌤️ Weather in Tokyo</button>
-          <button class="chip" data-prompt="Calculate the compound interest on $10,000 at 5% for 10 years">🧮 Compound Interest</button>
-          <button class="chip" data-prompt="Search the web for the latest AI news">🔍 Latest AI News</button>
-          <button class="chip" data-prompt="Generate a Python function that implements binary search">💻 Generate Code</button>
+          <button class="chip" data-prompt="Run system diagnostics and report host telemetry, sir.">
+            ⚡ Run System Diagnostics
+          </button>
+          <button class="chip" data-prompt="Jarvis, scan current weather and atmospheric conditions.">
+            🌤️ Atmospheric Telemetry
+          </button>
+          <button class="chip" data-prompt="Jarvis, engage stealth protocol and brief me on latest tech news.">
+            🛡️ Stealth & Intelligence Feed
+          </button>
+          <button class="chip" data-prompt="Calculate sqrt(144) * 42 + 2**8 and explain the derivation.">
+            🧮 Compute Precision Math
+          </button>
+          <button class="chip" data-prompt="Synthesize a high-performance Python algorithm for graph traversal.">
+            💻 Synthesize Engineering Code
+          </button>
         </div>
       </div>
     </div>
 
-    <!-- ─── Input area ─────────────────────────────────────────── -->
+    <!-- ─── Tactical Command Input Area ────────────────────────── -->
     <div class="input-area">
       <div class="input-container">
+        <!-- Voice Input Microphone Button -->
+        <button id="mic-btn" class="mic-btn" title="Voice Command (Speak to JARVIS)">
+          <svg class="mic-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path>
+            <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+            <line x1="12" y1="19" x2="12" y2="22"></line>
+          </svg>
+          <span class="mic-pulse"></span>
+        </button>
+
         <textarea
           id="message-input"
-          placeholder="Message Gemma Agent…"
+          placeholder="Speak or transmit tactical directives to J.A.R.V.I.S.…"
           rows="1"
           autofocus
         ></textarea>
-        <button id="send-btn" class="send-btn" disabled title="Send message (Enter)">
+
+        <button id="send-btn" class="send-btn" disabled title="Transmit Directive (Enter)">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
             <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
           </svg>
         </button>
       </div>
-      <p class="input-hint">Gemma 4 can make mistakes. Verify important information.</p>
+      <div class="input-hud-footer">
+        <span class="hint-voice">💡 Press the microphone to talk or type a directive</span>
+        <span class="hint-status">PROTOCOL MARK VII • READY</span>
+      </div>
     </div>
   </main>
 
   <script src="/static/app.js"></script>
 </body>
 </html>
-

@@ -68,8 +68,8 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
 
 app = FastAPI(
-    title="Gemma 4 AI Agent",
-    version="1.0.0",
+    title="J.A.R.V.I.S. – Gemma 4 AI Assistant",
+    version="2.0.0",
     lifespan=lifespan,
 )
 

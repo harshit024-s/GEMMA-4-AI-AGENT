@@ -11,3 +11,4 @@ services:
         value: gemma-4-26b-a4b-it
       - key: PORT
         value: 10000
+

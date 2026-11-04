@@ -34,6 +34,7 @@ share/python-wheels/
 MANIFEST
 
 # Temporary files
+tools/
 ~*
 *.tmp
 
@@ -46,3 +47,4 @@ MANIFEST
 # OS files
 .DS_Store
 Thumbs.db
+
