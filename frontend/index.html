@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>J.A.R.V.I.S. — Gemma 4 Tactical Interface</title>
+  <title>J.A.R.V.I.S. — Tactical AI Interface</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🤖</text></svg>" />
   <link rel="stylesheet" href="/static/styles.css" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -17,6 +18,9 @@
   <div class="hud-grid-overlay"></div>
   <div class="hud-scanline"></div>
 
+  <!-- Floating Particles Canvas -->
+  <canvas id="particle-canvas"></canvas>
+
   <!-- ─── Sidebar / Tactical Status Panel ───────────────────────── -->
   <aside id="sidebar" class="sidebar">
     <div class="sidebar-header">
@@ -26,10 +30,10 @@
         </div>
         <div class="logo-titles">
           <span class="logo-text">J.A.R.V.I.S.</span>
-          <span class="logo-sub">Gemma 4 Tactical Core</span>
+          <span class="logo-sub">Gemma 4 Tactical Core v3</span>
         </div>
       </div>
-      <button id="new-chat-btn" class="btn-icon" title="Reset Session / Clear Buffer">
+      <button id="new-chat-btn" class="btn-icon" title="Reset Session (Ctrl+Shift+R)">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M3 21v-5h5"/></svg>
       </button>
     </div>
@@ -43,14 +47,24 @@
           <span class="telemetry-val" id="model-badge">Gemma 4 MoE</span>
         </div>
         <div class="telemetry-item">
-          <span class="telemetry-label">SECURITY PROTOCOL</span>
-          <span class="telemetry-val text-cyan">MARK VII • ACTIVE</span>
+          <span class="telemetry-label">SESSION CLOCK</span>
+          <span class="telemetry-val text-cyan" id="live-clock">--:--:--</span>
         </div>
         <div class="telemetry-item">
-          <span class="telemetry-label">AUDIO SPEECH SYNTHESIS</span>
+          <span class="telemetry-label">AUDIO SYNTHESIS</span>
           <span class="telemetry-val text-green" id="tts-status">ONLINE</span>
         </div>
+        <div class="telemetry-item">
+          <span class="telemetry-label">SESSION MESSAGES</span>
+          <span class="telemetry-val text-cyan" id="msg-counter">0</span>
+        </div>
       </div>
+    </div>
+
+    <!-- Active Timers -->
+    <div class="sidebar-section" id="timers-section" style="display:none;">
+      <h3 class="sidebar-title">Active Timers</h3>
+      <div id="timers-list" class="timers-list"></div>
     </div>
 
     <div class="sidebar-section">
@@ -79,6 +93,21 @@
         <input type="checkbox" id="stream-toggle" checked />
         <span class="toggle-switch"></span>
       </label>
+      <label class="toggle-row">
+        <span>Continuous Listen Mode</span>
+        <input type="checkbox" id="continuous-listen-toggle" />
+        <span class="toggle-switch"></span>
+      </label>
+    </div>
+
+    <div class="sidebar-section">
+      <h3 class="sidebar-title">Keyboard Shortcuts</h3>
+      <div class="shortcut-list">
+        <div class="shortcut-item"><kbd>Ctrl</kbd>+<kbd>M</kbd> <span>Toggle Mic</span></div>
+        <div class="shortcut-item"><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>R</kbd> <span>Reset Session</span></div>
+        <div class="shortcut-item"><kbd>Esc</kbd> <span>Stop Speaking</span></div>
+        <div class="shortcut-item"><kbd>Enter</kbd> <span>Send Message</span></div>
+      </div>
     </div>
 
     <div class="sidebar-footer">
@@ -140,20 +169,29 @@
         <p class="welcome-prompt-status" id="reactor-status-msg">At your service, sir. How may I assist you today?</p>
 
         <div class="welcome-chips">
-          <button class="chip" data-prompt="Run system diagnostics and report host telemetry, sir.">
-            ⚡ Run System Diagnostics
+          <button class="chip" data-prompt="Run full system diagnostics and report all subsystem telemetry.">
+            ⚡ System Diagnostics
           </button>
-          <button class="chip" data-prompt="Jarvis, scan current weather and atmospheric conditions.">
-            🌤️ Atmospheric Telemetry
+          <button class="chip" data-prompt="What's the current weather in New Delhi?">
+            🌤️ Weather Report
           </button>
-          <button class="chip" data-prompt="Jarvis, engage stealth protocol and brief me on latest tech news.">
-            🛡️ Stealth & Intelligence Feed
+          <button class="chip" data-prompt="Tell me about Artificial Intelligence using Wikipedia.">
+            📚 Knowledge Lookup
           </button>
-          <button class="chip" data-prompt="Calculate sqrt(144) * 42 + 2**8 and explain the derivation.">
-            🧮 Compute Precision Math
+          <button class="chip" data-prompt="Tell me a programming joke to lighten the mood.">
+            😄 Tell a Joke
           </button>
-          <button class="chip" data-prompt="Synthesize a high-performance Python algorithm for graph traversal.">
-            💻 Synthesize Engineering Code
+          <button class="chip" data-prompt="Convert 100 km to miles and 37 degrees Celsius to Fahrenheit.">
+            🔄 Unit Converter
+          </button>
+          <button class="chip" data-prompt="Set a timer for 60 seconds labeled 'Focus Break'.">
+            ⏱️ Set Timer
+          </button>
+          <button class="chip" data-prompt="Generate a Python script for a simple web scraper.">
+            💻 Generate Code
+          </button>
+          <button class="chip" data-prompt="What is the current date and time? Also calculate 2^16.">
+            🧮 Math & Time
           </button>
         </div>
       </div>
@@ -163,7 +201,7 @@
     <div class="input-area">
       <div class="input-container">
         <!-- Voice Input Microphone Button -->
-        <button id="mic-btn" class="mic-btn" title="Voice Command (Speak to JARVIS)">
+        <button id="mic-btn" class="mic-btn" title="Voice Command (Ctrl+M)">
           <svg class="mic-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path>
             <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
@@ -174,7 +212,7 @@
 
         <textarea
           id="message-input"
-          placeholder="Speak or transmit tactical directives to J.A.R.V.I.S.…"
+          placeholder="Speak or type tactical directives to J.A.R.V.I.S.…"
           rows="1"
           autofocus
         ></textarea>
@@ -186,7 +224,7 @@
         </button>
       </div>
       <div class="input-hud-footer">
-        <span class="hint-voice">💡 Press the microphone to talk or type a directive</span>
+        <span class="hint-voice">💡 Ctrl+M for mic • Esc to stop voice • Ctrl+Shift+R to reset</span>
         <span class="hint-status">PROTOCOL MARK VII • READY</span>
       </div>
     </div>

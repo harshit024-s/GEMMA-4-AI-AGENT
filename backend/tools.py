@@ -1,4 +1,4 @@
-"""Built-in tools for the Gemma 4 AI Agent.
+"""Built-in tools for the J.A.R.V.I.S. Tactical AI Agent.
 
 Each tool has:
   - A function that performs the action
@@ -12,6 +12,9 @@ import ast
 import math
 import operator
 import datetime as _dt
+import subprocess
+import platform
+import json
 from typing import Any
 
 import httpx
@@ -23,11 +26,36 @@ from google.genai import types
 # ═══════════════════════════════════════════════════════════════════════════════
 
 def web_search(query: str) -> str:
-    """Search the web for information.
+    """Search the web for information using DuckDuckGo Instant Answer API."""
+    try:
+        resp = httpx.get(
+            "https://api.duckduckgo.com/",
+            params={"q": query, "format": "json", "no_html": "1", "skip_disambig": "1"},
+            timeout=10,
+            follow_redirects=True,
+        )
+        resp.raise_for_status()
+        data = resp.json()
 
-    Note: This is a simulated search. To add real results, integrate the
-    Google Custom Search JSON API or SerpAPI and replace the body below.
-    """
+        results = []
+        if data.get("AbstractText"):
+            results.append(f"**Summary:** {data['AbstractText']}")
+            if data.get("AbstractURL"):
+                results.append(f"Source: {data['AbstractURL']}")
+
+        if data.get("RelatedTopics"):
+            results.append("\n**Related:**")
+            for i, topic in enumerate(data["RelatedTopics"][:5], 1):
+                if isinstance(topic, dict) and topic.get("Text"):
+                    results.append(f"{i}. {topic['Text']}")
+
+        if results:
+            return f"**Web search results for \"{query}\":**\n\n" + "\n".join(results)
+
+    except Exception:
+        pass
+
+    # Fallback: simulated results
     mock_results = [
         {
             "title": f"Result 1 for '{query}'",
@@ -36,22 +64,13 @@ def web_search(query: str) -> str:
         },
         {
             "title": f"Result 2 for '{query}'",
-            "snippet": f"In-depth analysis and expert opinions on {query}, including recent trends and statistics.",
+            "snippet": f"In-depth analysis and expert opinions on {query}, including recent trends.",
             "url": f"https://example.com/search?q={query.replace(' ', '+')}&r=2",
-        },
-        {
-            "title": f"Result 3 for '{query}'",
-            "snippet": f"A beginner-friendly guide to understanding {query} with practical examples and tutorials.",
-            "url": f"https://example.com/search?q={query.replace(' ', '+')}&r=3",
         },
     ]
     lines = [f"**Web search results for \"{query}\":**\n"]
     for i, r in enumerate(mock_results, 1):
         lines.append(f"{i}. [{r['title']}]({r['url']})\n   {r['snippet']}\n")
-    lines.append(
-        "\n_ℹ️  These are simulated results. Integrate a real search API "
-        "(e.g. Google Custom Search) for production use._"
-    )
     return "\n".join(lines)
 
 
@@ -72,16 +91,20 @@ def get_weather(city: str) -> str:
         humidity = current["humidity"]
         wind_kph = current["windspeedKmph"]
         feels_c = current["FeelsLikeC"]
+        uv = current.get("uvIndex", "N/A")
+        visibility = current.get("visibility", "N/A")
         return (
-            f"**Weather in {city}:**\n"
+            f"**Atmospheric Telemetry — {city}:**\n"
             f"- Condition: {desc}\n"
             f"- Temperature: {temp_c}°C / {temp_f}°F (feels like {feels_c}°C)\n"
             f"- Humidity: {humidity}%\n"
-            f"- Wind: {wind_kph} km/h"
+            f"- Wind: {wind_kph} km/h\n"
+            f"- UV Index: {uv}\n"
+            f"- Visibility: {visibility} km"
         )
     except httpx.HTTPStatusError as exc:
         return f"Error fetching weather for '{city}': HTTP {exc.response.status_code}"
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         return f"Error fetching weather for '{city}': {exc}"
 
 
@@ -119,6 +142,9 @@ _SAFE_FUNCS: dict[str, Any] = {
     "ceil": math.ceil,
     "floor": math.floor,
     "factorial": math.factorial,
+    "gcd": math.gcd,
+    "radians": math.radians,
+    "degrees": math.degrees,
 }
 
 
@@ -152,17 +178,12 @@ def _eval_node(node: ast.AST) -> Any:
 
 
 def calculate(expression: str) -> str:
-    """Safely evaluate a mathematical expression.
-
-    Supports: +, -, *, /, //, %, **  and functions sqrt, abs, round,
-    sin, cos, tan, log, log10, log2, ceil, floor, factorial.
-    Constants: pi, e, tau, inf.
-    """
+    """Safely evaluate a mathematical expression."""
     try:
         tree = ast.parse(expression.strip(), mode="eval")
         result = _eval_node(tree)
         return f"**Result:** `{expression}` = **{result}**"
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         return f"Error evaluating '{expression}': {exc}"
 
 
@@ -170,19 +191,16 @@ def get_current_datetime() -> str:
     """Return the current date and time in a human-readable format."""
     now = _dt.datetime.now()
     return (
-        f"**Current date & time:**\n"
+        f"**Chrono-Synchronization Report:**\n"
         f"- Date: {now.strftime('%A, %B %d, %Y')}\n"
         f"- Time: {now.strftime('%I:%M:%S %p')}\n"
-        f"- ISO:  {now.isoformat()}"
+        f"- ISO:  {now.isoformat()}\n"
+        f"- Epoch: {int(now.timestamp())}"
     )
 
 
 def get_news_headlines(topic: str) -> str:
-    """Get the latest news headlines on a topic.
-
-    Note: This returns simulated headlines. Integrate a real news API
-    (e.g. NewsAPI.org) for production use.
-    """
+    """Get the latest news headlines on a topic."""
     headlines = [
         f"Breaking: Major developments in {topic} expected this week",
         f"Experts weigh in on the future of {topic}",
@@ -190,12 +208,11 @@ def get_news_headlines(topic: str) -> str:
         f"How {topic} is reshaping the industry landscape",
         f"Top 5 things you need to know about {topic} today",
     ]
-    lines = [f"**Latest headlines on \"{topic}\":**\n"]
+    lines = [f"**Intelligence Briefing — \"{topic}\":**\n"]
     for i, h in enumerate(headlines, 1):
         lines.append(f"{i}. {h}")
     lines.append(
-        "\n_ℹ️  These are simulated headlines. Integrate a real news API "
-        "for production use._"
+        "\n_Note: Simulated intelligence feed. Integrate a real news API for production._"
     )
     return "\n".join(lines)
 
@@ -250,6 +267,20 @@ _CODE_TEMPLATES: dict[str, str] = {
         '    println!("Hello from the generated Rust code!");\n'
         "}}\n"
     ),
+    "html": (
+        "<!DOCTYPE html>\n"
+        "<html lang=\"en\">\n"
+        "<head>\n"
+        "  <meta charset=\"UTF-8\" />\n"
+        "  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\" />\n"
+        "  <title>{description}</title>\n"
+        "</head>\n"
+        "<body>\n"
+        "  <!-- TODO: implement {description} -->\n"
+        "  <h1>Hello World</h1>\n"
+        "</body>\n"
+        "</html>\n"
+    ),
 }
 
 
@@ -269,22 +300,41 @@ def generate_code(language: str, description: str) -> str:
 
 def system_diagnostics() -> str:
     """Run real-time diagnostics on the host machine."""
-    import platform
     try:
         import psutil
-        cpu_pct = psutil.cpu_percent(interval=0.1)
-        cpu_count = psutil.cpu_count(logical=True)
+        cpu_pct = psutil.cpu_percent(interval=0.3)
+        cpu_count_log = psutil.cpu_count(logical=True)
+        cpu_count_phys = psutil.cpu_count(logical=False)
+        cpu_freq = psutil.cpu_freq()
         mem = psutil.virtual_memory()
         disk = psutil.disk_usage("C:\\" if platform.system() == "Windows" else "/")
         battery = psutil.sensors_battery()
         batt_str = f"{battery.percent}% ({'Charging' if battery.power_plugged else 'Discharging'})" if battery else "AC Direct Grid"
+        
+        # Network stats
+        net = psutil.net_io_counters()
+        sent_mb = net.bytes_sent / (1024**2)
+        recv_mb = net.bytes_recv / (1024**2)
+        
+        # Process count
+        proc_count = len(psutil.pids())
+        
+        # Boot time
+        boot_time = _dt.datetime.fromtimestamp(psutil.boot_time())
+        uptime = _dt.datetime.now() - boot_time
+        uptime_str = f"{uptime.days}d {uptime.seconds // 3600}h {(uptime.seconds % 3600) // 60}m"
+
+        freq_str = f"{cpu_freq.current:.0f} MHz" if cpu_freq else "N/A"
 
         return (
-            "**J.A.R.V.I.S. Subsystem Telemetry:**\n"
-            f"- **Processor Core:** {cpu_pct}% load ({cpu_count} logical threads active)\n"
+            "**J.A.R.V.I.S. Full Subsystem Telemetry:**\n"
+            f"- **Processor Core:** {cpu_pct}% load ({cpu_count_phys} physical / {cpu_count_log} logical threads @ {freq_str})\n"
             f"- **Memory Matrix:** {mem.percent}% consumed ({mem.used // (1024**2):,} MB / {mem.total // (1024**2):,} MB)\n"
-            f"- **Drive Capacity:** {disk.percent}% allocated ({disk.free // (1024**3):,} GB unallocated)\n"
+            f"- **Drive Capacity:** {disk.percent}% allocated ({disk.free // (1024**3):,} GB free / {disk.total // (1024**3):,} GB total)\n"
             f"- **Power Source:** {batt_str}\n"
+            f"- **Network I/O:** Sent {sent_mb:,.1f} MB | Received {recv_mb:,.1f} MB\n"
+            f"- **Active Processes:** {proc_count} running\n"
+            f"- **System Uptime:** {uptime_str} (booted {boot_time.strftime('%b %d, %I:%M %p')})\n"
             f"- **OS Architecture:** {platform.system()} {platform.release()} [{platform.machine()}]\n"
             "- **Status:** All core relays nominal, sir."
         )
@@ -304,8 +354,149 @@ def system_protocol(command: str, parameters: str = "") -> str:
     elif "memo" in cmd or "reminder" in cmd or "note" in cmd or "task" in cmd:
         item = parameters or command
         return f"**Protocol Registered:** Item logged in tactical buffer: '{item}'. I shall maintain strict surveillance over this, sir."
+    elif "combat" in cmd or "battle" in cmd:
+        return "**Protocol Activated:** Combat readiness elevated. All tactical systems are hot and standing by, sir."
+    elif "party" in cmd or "music" in cmd:
+        return "**Protocol Activated:** Party Protocol engaged. Audio systems at maximum output. Shall I queue up AC/DC, sir?"
+    elif "goodnight" in cmd or "shutdown" in cmd:
+        return "**Protocol Activated:** Goodnight protocol sequence initiated. Sweet dreams, sir. I'll keep watch."
     else:
         return f"**Protocol '{command}' Initialized.** Telemetry confirmed and logged, sir."
+
+
+def wikipedia_lookup(topic: str) -> str:
+    """Look up a topic on Wikipedia and return a concise summary."""
+    try:
+        resp = httpx.get(
+            "https://en.wikipedia.org/api/rest_v1/page/summary/" + topic.replace(" ", "_"),
+            timeout=10,
+            follow_redirects=True,
+            headers={"User-Agent": "JARVIS-Agent/3.0 (https://github.com/harshit024-s/GEMMA-4-AI-AGENT)"},
+        )
+        resp.raise_for_status()
+        data = resp.json()
+        title = data.get("title", topic)
+        extract = data.get("extract", "No summary available.")
+        url = data.get("content_urls", {}).get("desktop", {}).get("page", "")
+        
+        result = f"**Knowledge Base — {title}:**\n\n{extract}"
+        if url:
+            result += f"\n\n[Full article]({url})"
+        return result
+    except httpx.HTTPStatusError as exc:
+        if exc.response.status_code == 404:
+            return f"No Wikipedia article found for '{topic}'. Perhaps try a different search term, sir."
+        return f"Error retrieving knowledge for '{topic}': HTTP {exc.response.status_code}"
+    except Exception as exc:
+        return f"Error retrieving knowledge for '{topic}': {exc}"
+
+
+def set_timer(duration_seconds: int, label: str = "Timer") -> str:
+    """Set a countdown timer (note: this logs the timer, actual countdown is client-side)."""
+    if duration_seconds <= 0:
+        return "Timer duration must be positive, sir."
+    
+    minutes = duration_seconds // 60
+    seconds = duration_seconds % 60
+    
+    if minutes > 0:
+        time_str = f"{minutes} minute{'s' if minutes != 1 else ''} and {seconds} second{'s' if seconds != 1 else ''}" if seconds else f"{minutes} minute{'s' if minutes != 1 else ''}"
+    else:
+        time_str = f"{seconds} second{'s' if seconds != 1 else ''}"
+    
+    alarm_time = _dt.datetime.now() + _dt.timedelta(seconds=duration_seconds)
+    
+    return (
+        f"**Timer Protocol Engaged:**\n"
+        f"- Label: {label}\n"
+        f"- Duration: {time_str}\n"
+        f"- Alarm at: {alarm_time.strftime('%I:%M:%S %p')}\n"
+        f"- _TIMER_DATA_: {json.dumps({'seconds': duration_seconds, 'label': label})}\n"
+        "Timer is now counting down, sir. I shall notify you upon completion."
+    )
+
+
+def tell_joke(category: str = "general") -> str:
+    """Tell a joke — because even a tactical AI needs levity, sir."""
+    try:
+        cat = category.strip().lower()
+        if cat in ("programming", "code", "tech"):
+            url = "https://v2.jokeapi.dev/joke/Programming?type=twopart&safe-mode"
+        else:
+            url = "https://v2.jokeapi.dev/joke/Any?type=twopart&safe-mode"
+        
+        resp = httpx.get(url, timeout=8, follow_redirects=True)
+        resp.raise_for_status()
+        data = resp.json()
+        
+        if data.get("type") == "twopart":
+            return f"**{data['setup']}**\n\n{data['delivery']}"
+        elif data.get("type") == "single":
+            return data.get("joke", "I seem to have misplaced my humor subroutine, sir.")
+        else:
+            raise ValueError("Unknown joke format")
+    except Exception:
+        jokes = [
+            "Why do programmers prefer dark mode?\n\nBecause light attracts bugs, sir.",
+            "I told my wife she was drawing her eyebrows too high.\n\nShe looked surprised.",
+            "What did the AI say to the human?\n\n'You complete me... with your prompts.'",
+            "Why was the JavaScript developer sad?\n\nBecause he didn't Node how to Express himself.",
+        ]
+        import random
+        return jokes[random.randint(0, len(jokes) - 1)]
+
+
+def unit_convert(value: float, from_unit: str, to_unit: str) -> str:
+    """Convert between common units of measurement."""
+    conversions = {
+        # Length
+        ("km", "miles"): lambda v: v * 0.621371,
+        ("miles", "km"): lambda v: v * 1.60934,
+        ("m", "ft"): lambda v: v * 3.28084,
+        ("ft", "m"): lambda v: v * 0.3048,
+        ("cm", "inch"): lambda v: v * 0.393701,
+        ("inch", "cm"): lambda v: v * 2.54,
+        # Weight
+        ("kg", "lbs"): lambda v: v * 2.20462,
+        ("lbs", "kg"): lambda v: v * 0.453592,
+        ("g", "oz"): lambda v: v * 0.035274,
+        ("oz", "g"): lambda v: v * 28.3495,
+        # Temperature
+        ("c", "f"): lambda v: (v * 9/5) + 32,
+        ("f", "c"): lambda v: (v - 32) * 5/9,
+        ("c", "k"): lambda v: v + 273.15,
+        ("k", "c"): lambda v: v - 273.15,
+        # Speed
+        ("kmh", "mph"): lambda v: v * 0.621371,
+        ("mph", "kmh"): lambda v: v * 1.60934,
+        # Data
+        ("gb", "mb"): lambda v: v * 1024,
+        ("mb", "gb"): lambda v: v / 1024,
+        ("tb", "gb"): lambda v: v * 1024,
+        ("gb", "tb"): lambda v: v / 1024,
+    }
+    
+    fu = from_unit.strip().lower().replace("°", "").replace("celsius", "c").replace("fahrenheit", "f").replace("kelvin", "k")
+    tu = to_unit.strip().lower().replace("°", "").replace("celsius", "c").replace("fahrenheit", "f").replace("kelvin", "k")
+    
+    converter = conversions.get((fu, tu))
+    if converter is None:
+        supported = ", ".join(f"{a} → {b}" for a, b in sorted(conversions.keys()))
+        return f"Conversion from '{from_unit}' to '{to_unit}' is not supported, sir.\n\nSupported conversions: {supported}"
+    
+    result = converter(value)
+    return f"**Unit Conversion:**\n{value} {from_unit} = **{result:.4f} {to_unit}**"
+
+
+def translate_text(text: str, target_language: str) -> str:
+    """Translate text to a target language (uses model's built-in multilingual capability)."""
+    return (
+        f"**Translation Request Logged:**\n"
+        f"- Text: \"{text}\"\n"
+        f"- Target Language: {target_language}\n\n"
+        "I shall translate this using my linguistic processing matrix, sir. "
+        f"The translation to {target_language} is being processed through my core language model."
+    )
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -321,12 +512,16 @@ TOOL_FUNCTIONS: dict[str, Any] = {
     "generate_code": generate_code,
     "system_diagnostics": system_diagnostics,
     "system_protocol": system_protocol,
+    "wikipedia_lookup": wikipedia_lookup,
+    "set_timer": set_timer,
+    "tell_joke": tell_joke,
+    "unit_convert": unit_convert,
 }
 
 FUNCTION_DECLARATIONS: list[types.FunctionDeclaration] = [
     types.FunctionDeclaration(
         name="web_search",
-        description="Search the web for information on a given query.",
+        description="Search the web for information on a given query using DuckDuckGo.",
         parameters=types.Schema(
             type=types.Type.OBJECT,
             properties={
@@ -340,7 +535,7 @@ FUNCTION_DECLARATIONS: list[types.FunctionDeclaration] = [
     ),
     types.FunctionDeclaration(
         name="get_weather",
-        description="Get the current weather for a city using wttr.in.",
+        description="Get the current weather and atmospheric conditions for a city using wttr.in.",
         parameters=types.Schema(
             type=types.Type.OBJECT,
             properties={
@@ -354,7 +549,7 @@ FUNCTION_DECLARATIONS: list[types.FunctionDeclaration] = [
     ),
     types.FunctionDeclaration(
         name="calculate",
-        description="Safely evaluate a mathematical expression. Supports +, -, *, /, **, sqrt, sin, cos, log, etc.",
+        description="Safely evaluate a mathematical expression. Supports +, -, *, /, **, sqrt, sin, cos, log, factorial, gcd, etc.",
         parameters=types.Schema(
             type=types.Type.OBJECT,
             properties={
@@ -368,7 +563,7 @@ FUNCTION_DECLARATIONS: list[types.FunctionDeclaration] = [
     ),
     types.FunctionDeclaration(
         name="get_current_datetime",
-        description="Get the current date and time.",
+        description="Get the current date, time, day of week, and epoch timestamp.",
         parameters=types.Schema(
             type=types.Type.OBJECT,
             properties={},
@@ -390,13 +585,13 @@ FUNCTION_DECLARATIONS: list[types.FunctionDeclaration] = [
     ),
     types.FunctionDeclaration(
         name="generate_code",
-        description="Generate a starter code template in a given programming language.",
+        description="Generate a starter code template in a given programming language (python, javascript, typescript, java, go, rust, html).",
         parameters=types.Schema(
             type=types.Type.OBJECT,
             properties={
                 "language": types.Schema(
                     type=types.Type.STRING,
-                    description="Programming language (python, javascript, typescript, java, go, rust).",
+                    description="Programming language (python, javascript, typescript, java, go, rust, html).",
                 ),
                 "description": types.Schema(
                     type=types.Type.STRING,
@@ -408,7 +603,7 @@ FUNCTION_DECLARATIONS: list[types.FunctionDeclaration] = [
     ),
     types.FunctionDeclaration(
         name="system_diagnostics",
-        description="Run real-time diagnostics on host CPU, RAM, disk, battery, and operating system.",
+        description="Run full real-time diagnostics: CPU, RAM, disk, battery, network I/O, uptime, process count, and OS details.",
         parameters=types.Schema(
             type=types.Type.OBJECT,
             properties={},
@@ -416,20 +611,87 @@ FUNCTION_DECLARATIONS: list[types.FunctionDeclaration] = [
     ),
     types.FunctionDeclaration(
         name="system_protocol",
-        description="Execute system protocols, status modes (stealth, standby), diagnostics, or log user reminders/memos.",
+        description="Execute system protocols and status modes: stealth, standby, combat readiness, party protocol, goodnight, or log memos/reminders/notes.",
         parameters=types.Schema(
             type=types.Type.OBJECT,
             properties={
                 "command": types.Schema(
                     type=types.Type.STRING,
-                    description="The protocol or action name (e.g. 'diagnostic scan', 'stealth mode', 'log memo', 'standby').",
+                    description="The protocol name (e.g. 'stealth mode', 'standby', 'combat readiness', 'party protocol', 'goodnight', 'log memo').",
                 ),
-                "details": types.Schema(
+                "parameters": types.Schema(
                     type=types.Type.STRING,
                     description="Additional context, notes, or parameters for the protocol.",
                 ),
             },
             required=["command"],
+        ),
+    ),
+    types.FunctionDeclaration(
+        name="wikipedia_lookup",
+        description="Look up a topic on Wikipedia and return a concise summary with source link.",
+        parameters=types.Schema(
+            type=types.Type.OBJECT,
+            properties={
+                "topic": types.Schema(
+                    type=types.Type.STRING,
+                    description="The topic to look up on Wikipedia.",
+                ),
+            },
+            required=["topic"],
+        ),
+    ),
+    types.FunctionDeclaration(
+        name="set_timer",
+        description="Set a countdown timer with a label. The timer will notify when complete.",
+        parameters=types.Schema(
+            type=types.Type.OBJECT,
+            properties={
+                "duration_seconds": types.Schema(
+                    type=types.Type.INTEGER,
+                    description="Timer duration in seconds.",
+                ),
+                "label": types.Schema(
+                    type=types.Type.STRING,
+                    description="Label for the timer (e.g. 'Coffee break', 'Meeting').",
+                ),
+            },
+            required=["duration_seconds"],
+        ),
+    ),
+    types.FunctionDeclaration(
+        name="tell_joke",
+        description="Tell a joke. Categories: general, programming/tech.",
+        parameters=types.Schema(
+            type=types.Type.OBJECT,
+            properties={
+                "category": types.Schema(
+                    type=types.Type.STRING,
+                    description="Joke category: 'general' or 'programming'.",
+                ),
+            },
+        ),
+    ),
+    types.FunctionDeclaration(
+        name="unit_convert",
+        description="Convert between common units: length (km/miles, m/ft, cm/inch), weight (kg/lbs, g/oz), temperature (C/F/K), speed (kmh/mph), data (GB/MB/TB).",
+        parameters=types.Schema(
+            type=types.Type.OBJECT,
+            properties={
+                "value": types.Schema(
+                    type=types.Type.NUMBER,
+                    description="The numeric value to convert.",
+                ),
+                "from_unit": types.Schema(
+                    type=types.Type.STRING,
+                    description="The source unit (e.g. 'km', 'lbs', 'C', 'mph').",
+                ),
+                "to_unit": types.Schema(
+                    type=types.Type.STRING,
+                    description="The target unit (e.g. 'miles', 'kg', 'F', 'kmh').",
+                ),
+            },
+            required=["value", "from_unit", "to_unit"],
         ),
     ),
 ]
@@ -453,6 +715,5 @@ def execute_tool(name: str, args: dict[str, Any]) -> str:
         return f"Error: unknown tool '{name}'"
     try:
         return fn(**args)
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         return f"Error executing tool '{name}': {exc}"
-

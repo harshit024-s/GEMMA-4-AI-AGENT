@@ -1,9 +1,8 @@
 /* ═══════════════════════════════════════════════════════════════════════════
-   J.A.R.V.I.S. Tactical Interface Stylesheet (Iron Man HUD Aesthetic)
+   J.A.R.V.I.S. Tactical Interface v3 — Iron Man HUD Stylesheet
    ═══════════════════════════════════════════════════════════════════════════ */
 
 :root {
-  /* Holographic HUD Color Palette */
   --hud-bg-dark:       #040714;
   --hud-bg-panel:      rgba(7, 13, 30, 0.85);
   --hud-bg-card:       rgba(10, 20, 45, 0.7);
@@ -17,6 +16,7 @@
   --hud-gold:          #ffb700;
   --hud-green:         #00ff88;
   --hud-red:           #ff3366;
+  --hud-purple:        #a855f7;
 
   --text-primary:      #e2f3fc;
   --text-secondary:    #82a5c4;
@@ -57,7 +57,7 @@ body.jarvis-theme {
 .hud-grid-overlay {
   position: fixed;
   inset: 0;
-  background-image: 
+  background-image:
     linear-gradient(rgba(0, 240, 255, 0.03) 1px, transparent 1px),
     linear-gradient(90deg, rgba(0, 240, 255, 0.03) 1px, transparent 1px);
   background-size: 40px 40px;
@@ -75,20 +75,19 @@ body.jarvis-theme {
   opacity: 0.6;
 }
 
+/* ─── Particle Canvas ────────────────────────────────────────────────────── */
+#particle-canvas {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 3;
+}
+
 /* ─── Scrollbar ─────────────────────────────────────────────────────────── */
-::-webkit-scrollbar {
-  width: 5px;
-}
-::-webkit-scrollbar-track {
-  background: rgba(0, 0, 0, 0.2);
-}
-::-webkit-scrollbar-thumb {
-  background: var(--border-cyan);
-  border-radius: 4px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: var(--hud-cyan);
-}
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.2); }
+::-webkit-scrollbar-thumb { background: var(--border-cyan); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--hud-cyan); }
 
 /* ═══════════════════════════════════════════════════════════════════════════
    Sidebar / Tactical Control Panel
@@ -254,6 +253,85 @@ body.jarvis-theme {
 .text-cyan { color: var(--hud-cyan); text-shadow: 0 0 8px rgba(0, 240, 255, 0.4); }
 .text-green { color: var(--hud-green); text-shadow: 0 0 8px rgba(0, 255, 136, 0.4); }
 
+/* Timer Items */
+.timers-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.timer-item {
+  background: var(--hud-bg-card);
+  border: 1px solid var(--hud-gold);
+  border-left: 3px solid var(--hud-gold);
+  border-radius: 4px;
+  padding: 8px 10px;
+}
+
+.timer-label {
+  font-size: 0.8rem;
+  color: var(--hud-gold);
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.timer-bar-bg {
+  height: 4px;
+  background: rgba(255, 183, 0, 0.2);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-bottom: 4px;
+}
+
+.timer-bar-fill {
+  height: 100%;
+  background: var(--hud-gold);
+  border-radius: 2px;
+  transition: width 1s linear;
+  box-shadow: 0 0 6px rgba(255, 183, 0, 0.5);
+}
+
+.timer-time {
+  font-family: 'Orbitron', monospace;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--hud-gold);
+  text-align: right;
+}
+
+/* Keyboard Shortcuts */
+.shortcut-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.shortcut-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+}
+
+.shortcut-item kbd {
+  background: var(--hud-bg-card);
+  border: 1px solid var(--border-cyan);
+  border-radius: 3px;
+  padding: 2px 6px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem;
+  color: var(--hud-cyan);
+  min-width: 20px;
+  text-align: center;
+}
+
+.shortcut-item span {
+  margin-left: auto;
+  color: var(--text-dim);
+  font-size: 0.72rem;
+}
+
 /* Tools List */
 .tools-list {
   list-style: none;
@@ -294,6 +372,17 @@ body.jarvis-theme {
   line-height: 1.3;
 }
 
+/* Shimmer loading */
+.loading-shimmer {
+  background: linear-gradient(90deg, var(--hud-bg-card) 25%, rgba(0, 240, 255, 0.06) 50%, var(--hud-bg-card) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
 /* Toggles */
 .toggle-row {
   display: flex;
@@ -306,9 +395,7 @@ body.jarvis-theme {
   cursor: pointer;
 }
 
-.toggle-row input {
-  display: none;
-}
+.toggle-row input { display: none; }
 
 .toggle-switch {
   width: 38px;
@@ -483,14 +570,12 @@ body.jarvis-theme {
   flex-direction: column;
   align-items: center;
   text-align: center;
-  max-width: 680px;
+  max-width: 780px;
   padding: 20px 0;
   transition: opacity var(--speed);
 }
 
-.welcome-screen.hidden {
-  display: none;
-}
+.welcome-screen.hidden { display: none; }
 
 .arc-reactor-container {
   width: 140px;
@@ -565,6 +650,16 @@ body.jarvis-theme {
   box-shadow: 0 0 30px var(--hud-cyan);
 }
 
+.arc-reactor-container.speaking .arc-ring-outer {
+  border-color: var(--hud-green);
+  box-shadow: 0 0 25px rgba(0, 255, 136, 0.5);
+  animation-duration: 4s;
+}
+
+.arc-reactor-container.speaking .arc-core-inner {
+  box-shadow: 0 0 20px var(--hud-green);
+}
+
 @keyframes rotateOuter {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
@@ -613,7 +708,7 @@ body.jarvis-theme {
   flex-wrap: wrap;
   gap: 10px;
   justify-content: center;
-  max-width: 600px;
+  max-width: 700px;
 }
 
 .chip {
@@ -671,7 +766,7 @@ body.jarvis-theme {
   justify-content: center;
   font-family: 'Orbitron', monospace;
   font-weight: 700;
-  font-size: 0.85rem;
+  font-size: 0.7rem;
   flex-shrink: 0;
 }
 
@@ -700,6 +795,17 @@ body.jarvis-theme {
   line-height: 1.6;
 }
 
+.message-time {
+  font-size: 0.68rem;
+  color: var(--text-dim);
+  margin-top: 4px;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.message-row.user .message-time {
+  text-align: right;
+}
+
 .message-row.user .message-bubble {
   background: rgba(0, 119, 255, 0.2);
   border: 1px solid rgba(0, 240, 255, 0.4);
@@ -714,6 +820,78 @@ body.jarvis-theme {
   border-left: 3px solid var(--hud-cyan);
   color: var(--text-primary);
   border-top-left-radius: 2px;
+}
+
+/* Message bubble markdown */
+.message-bubble h1, .message-bubble h2, .message-bubble h3 {
+  font-family: 'Orbitron', monospace;
+  color: var(--hud-cyan);
+  margin: 12px 0 6px;
+}
+.message-bubble h1 { font-size: 1.2rem; }
+.message-bubble h2 { font-size: 1.05rem; }
+.message-bubble h3 { font-size: 0.95rem; }
+
+.message-bubble code {
+  background: rgba(0, 240, 255, 0.1);
+  color: var(--hud-cyan);
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.88rem;
+}
+
+.message-bubble pre {
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid var(--border-cyan);
+  border-radius: 6px;
+  padding: 14px;
+  overflow-x: auto;
+  margin: 10px 0;
+}
+
+.message-bubble pre code {
+  background: transparent;
+  padding: 0;
+  color: var(--hud-green);
+}
+
+.message-bubble a {
+  color: var(--hud-cyan);
+  text-decoration: underline;
+  text-decoration-color: rgba(0, 240, 255, 0.3);
+}
+
+.message-bubble a:hover {
+  color: #ffffff;
+  text-decoration-color: var(--hud-cyan);
+}
+
+.message-bubble ul, .message-bubble ol {
+  padding-left: 20px;
+  margin: 6px 0;
+}
+
+.message-bubble li {
+  margin-bottom: 4px;
+}
+
+.message-bubble blockquote {
+  border-left: 3px solid var(--hud-gold);
+  padding-left: 12px;
+  color: var(--text-secondary);
+  font-style: italic;
+  margin: 8px 0;
+}
+
+.message-bubble strong {
+  color: var(--hud-cyan);
+}
+
+.message-bubble hr {
+  border: none;
+  border-top: 1px solid var(--border-cyan);
+  margin: 12px 0;
 }
 
 /* Tool Execution Cards */
@@ -1032,4 +1210,18 @@ body.jarvis-theme {
   .welcome-title {
     font-size: 2rem;
   }
+  .welcome-chips {
+    max-width: 100%;
+    padding: 0 10px;
+  }
+  .chip {
+    font-size: 0.8rem;
+    padding: 7px 12px;
+  }
+}
+
+/* ─── Selection Color ────────────────────────────────────────────────────── */
+::selection {
+  background: rgba(0, 240, 255, 0.3);
+  color: #ffffff;
 }
