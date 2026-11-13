@@ -3,232 +3,198 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>J.A.R.V.I.S. — Tactical AI Interface</title>
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🤖</text></svg>" />
-  <link rel="stylesheet" href="/static/styles.css" />
+  <title>AURA — Next-Gen AI Companion</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='45' fill='%234338ca'/><path d='M30 50 Q50 20 70 50 T100 50' stroke='%2338bdf8' stroke-width='8' fill='none'/></svg>" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link
-    href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"
+    href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
     rel="stylesheet"
   />
+  <link rel="stylesheet" href="/static/styles.css" />
 </head>
-<body class="jarvis-theme">
-  <!-- Background Grid & Scanning Overlay -->
-  <div class="hud-grid-overlay"></div>
-  <div class="hud-scanline"></div>
+<body class="aura-theme">
+  <!-- 3D Fluid Live Wave Canvas -->
+  <canvas id="wave-canvas"></canvas>
 
-  <!-- Floating Particles Canvas -->
-  <canvas id="particle-canvas"></canvas>
+  <!-- Ambient Background Glows -->
+  <div class="ambient-glow glow-top"></div>
+  <div class="ambient-glow glow-bottom"></div>
 
-  <!-- ─── Sidebar / Tactical Status Panel ───────────────────────── -->
-  <aside id="sidebar" class="sidebar">
-    <div class="sidebar-header">
-      <div class="logo">
-        <div class="mini-arc-reactor">
-          <div class="core-dot"></div>
-        </div>
-        <div class="logo-titles">
-          <span class="logo-text">J.A.R.V.I.S.</span>
-          <span class="logo-sub">Gemma 4 Tactical Core v3</span>
+  <!-- ─── Top Minimal Navigation Bar ─────────────────────────────── -->
+  <header class="top-nav">
+    <div class="brand">
+      <div class="brand-pulse"></div>
+      <span class="brand-name">AURA</span>
+      <span class="model-tag" id="model-tag">Gemma 4</span>
+    </div>
+
+    <!-- Active Task Pill (Appears when a tool/task is running) -->
+    <div class="task-status-pill hidden" id="task-status-pill">
+      <span class="task-spinner"></span>
+      <span class="task-status-text" id="task-status-text">Processing task...</span>
+    </div>
+
+    <div class="nav-controls">
+      <!-- Voice Selector Pill -->
+      <div class="voice-selector-wrapper">
+        <button id="voice-menu-btn" class="nav-btn voice-btn" title="Voice Settings">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/>
+            <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+            <line x1="12" y1="19" x2="12" y2="22"/>
+          </svg>
+          <span id="current-voice-name">Nova</span>
+        </button>
+
+        <div class="voice-dropdown hidden" id="voice-dropdown">
+          <div class="voice-dropdown-header">Voice Persona</div>
+          <div class="voice-options" id="voice-options">
+            <button class="voice-opt active" data-voice="nova">
+              <span class="voice-opt-name">Nova</span>
+              <span class="voice-opt-desc">Natural & Smooth (Female)</span>
+            </button>
+            <button class="voice-opt" data-voice="aura">
+              <span class="voice-opt-name">Aura</span>
+              <span class="voice-opt-desc">Soft & Ambient (Female)</span>
+            </button>
+            <button class="voice-opt" data-voice="atlas">
+              <span class="voice-opt-name">Atlas</span>
+              <span class="voice-opt-desc">Deep & Calm (Male)</span>
+            </button>
+            <button class="voice-opt" data-voice="sol">
+              <span class="voice-opt-name">Sol</span>
+              <span class="voice-opt-desc">Warm & Conversational</span>
+            </button>
+          </div>
+          <div class="voice-toggles">
+            <label class="dropdown-toggle">
+              <span>Voice Responses (TTS)</span>
+              <input type="checkbox" id="voice-speech-toggle" checked />
+              <span class="pill-toggle"></span>
+            </label>
+            <label class="dropdown-toggle">
+              <span>Continuous Listening</span>
+              <input type="checkbox" id="continuous-mic-toggle" />
+              <span class="pill-toggle"></span>
+            </label>
+          </div>
         </div>
       </div>
-      <button id="new-chat-btn" class="btn-icon" title="Reset Session (Ctrl+Shift+R)">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M3 21v-5h5"/></svg>
+
+      <!-- Task History Drawer Toggle -->
+      <button id="tasks-toggle-btn" class="nav-btn" title="View Performed Tasks">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M9 11l3 3L22 4"/>
+          <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+        </svg>
+        <span class="task-badge" id="task-badge">0</span>
+      </button>
+
+      <!-- Clear Session -->
+      <button id="reset-btn" class="nav-btn icon-only" title="New Session">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
+          <path d="M21 3v5h-5"/>
+          <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
+          <path d="M3 21v-5h5"/>
+        </svg>
       </button>
     </div>
+  </header>
 
-    <!-- Live System Telemetry Widget -->
-    <div class="sidebar-section telemetry-section">
-      <h3 class="sidebar-title">System Telemetry</h3>
-      <div class="telemetry-badges">
-        <div class="telemetry-item">
-          <span class="telemetry-label">CORE ARCHITECTURE</span>
-          <span class="telemetry-val" id="model-badge">Gemma 4 MoE</span>
-        </div>
-        <div class="telemetry-item">
-          <span class="telemetry-label">SESSION CLOCK</span>
-          <span class="telemetry-val text-cyan" id="live-clock">--:--:--</span>
-        </div>
-        <div class="telemetry-item">
-          <span class="telemetry-label">AUDIO SYNTHESIS</span>
-          <span class="telemetry-val text-green" id="tts-status">ONLINE</span>
-        </div>
-        <div class="telemetry-item">
-          <span class="telemetry-label">SESSION MESSAGES</span>
-          <span class="telemetry-val text-cyan" id="msg-counter">0</span>
-        </div>
-      </div>
-    </div>
+  <!-- ─── Main Content Canvas Area ──────────────────────────────── -->
+  <main class="main-container">
+    <div id="chat-stream" class="chat-stream">
+      <!-- Minimal Hero Center Welcome Screen -->
+      <div class="hero-screen" id="hero-screen">
+        <h1 class="hero-title">What can I help you with ?</h1>
+        <p class="hero-sub" id="hero-sub">Speak or type your request. Tasks & tools run seamlessly.</p>
 
-    <!-- Active Timers -->
-    <div class="sidebar-section" id="timers-section" style="display:none;">
-      <h3 class="sidebar-title">Active Timers</h3>
-      <div id="timers-list" class="timers-list"></div>
-    </div>
-
-    <div class="sidebar-section">
-      <h3 class="sidebar-title">Tactical Tool Protocols</h3>
-      <ul id="tools-list" class="tools-list">
-        <li class="tool-item loading-shimmer">&nbsp;</li>
-        <li class="tool-item loading-shimmer">&nbsp;</li>
-        <li class="tool-item loading-shimmer">&nbsp;</li>
-      </ul>
-    </div>
-
-    <div class="sidebar-section">
-      <h3 class="sidebar-title">Voice & Reasoning Protocols</h3>
-      <label class="toggle-row">
-        <span>Audio Vocalization (TTS)</span>
-        <input type="checkbox" id="voice-toggle" checked />
-        <span class="toggle-switch"></span>
-      </label>
-      <label class="toggle-row">
-        <span>Deep Thinking (Reasoning)</span>
-        <input type="checkbox" id="thinking-toggle" />
-        <span class="toggle-switch"></span>
-      </label>
-      <label class="toggle-row">
-        <span>Real-Time Stream Relay</span>
-        <input type="checkbox" id="stream-toggle" checked />
-        <span class="toggle-switch"></span>
-      </label>
-      <label class="toggle-row">
-        <span>Continuous Listen Mode</span>
-        <input type="checkbox" id="continuous-listen-toggle" />
-        <span class="toggle-switch"></span>
-      </label>
-    </div>
-
-    <div class="sidebar-section">
-      <h3 class="sidebar-title">Keyboard Shortcuts</h3>
-      <div class="shortcut-list">
-        <div class="shortcut-item"><kbd>Ctrl</kbd>+<kbd>M</kbd> <span>Toggle Mic</span></div>
-        <div class="shortcut-item"><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>R</kbd> <span>Reset Session</span></div>
-        <div class="shortcut-item"><kbd>Esc</kbd> <span>Stop Speaking</span></div>
-        <div class="shortcut-item"><kbd>Enter</kbd> <span>Send Message</span></div>
-      </div>
-    </div>
-
-    <div class="sidebar-footer">
-      <div class="stark-badge">STARK INDUSTRIES • AI DIVISION</div>
-      <span class="powered-by">Powered by <strong>Google Gemma 4</strong></span>
-    </div>
-  </aside>
-
-  <!-- ─── Mobile sidebar toggle ─────────────────────────────────── -->
-  <button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle Tactical Panel">
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
-  </button>
-
-  <!-- ─── Main HUD Interface ────────────────────────────────────── -->
-  <main class="chat-main">
-    <!-- Top HUD Navigation Bar -->
-    <header class="hud-top-bar">
-      <div class="hud-status-indicator">
-        <span class="pulsing-beacon"></span>
-        <span class="hud-status-label" id="hud-status-text">SYSTEMS NOMINAL • ONLINE</span>
-      </div>
-
-      <!-- Real-time Equalizer Wave -->
-      <div class="audio-wave-visualizer" id="audio-visualizer">
-        <div class="bar"></div>
-        <div class="bar"></div>
-        <div class="bar"></div>
-        <div class="bar"></div>
-        <div class="bar"></div>
-        <div class="bar"></div>
-        <div class="bar"></div>
-        <div class="bar"></div>
-      </div>
-
-      <div class="hud-actions">
-        <button id="voice-mute-btn" class="hud-btn" title="Toggle Voice Output">
-          <span id="speaker-icon">🔊</span>
-        </button>
-      </div>
-    </header>
-
-    <div id="chat-messages" class="chat-messages">
-      <!-- Arc Reactor Center Welcome Screen -->
-      <div class="welcome-screen" id="welcome-screen">
-        <div class="arc-reactor-container" id="arc-reactor">
-          <div class="arc-ring-outer"></div>
-          <div class="arc-ring-inner"></div>
-          <div class="arc-core">
-            <div class="arc-core-pulse"></div>
-            <div class="arc-core-inner"></div>
-          </div>
-          <div class="arc-tech-accents">
-            <span></span><span></span><span></span><span></span>
-          </div>
-        </div>
-
-        <h1 class="welcome-title">J.A.R.V.I.S.</h1>
-        <p class="welcome-sub">Just A Rather Very Intelligent System • Gemma 4 Tactical Core</p>
-        <p class="welcome-prompt-status" id="reactor-status-msg">At your service, sir. How may I assist you today?</p>
-
-        <div class="welcome-chips">
-          <button class="chip" data-prompt="Run full system diagnostics and report all subsystem telemetry.">
-            ⚡ System Diagnostics
+        <!-- Subtle Suggestion Pills -->
+        <div class="suggestion-chips">
+          <button class="chip" data-prompt="Run system diagnostics and report CPU, memory, and battery status.">
+            ⚡ System Telemetry
           </button>
-          <button class="chip" data-prompt="What's the current weather in New Delhi?">
-            🌤️ Weather Report
+          <button class="chip" data-prompt="What is the weather like in New Delhi right now?">
+            🌤️ Live Weather
           </button>
-          <button class="chip" data-prompt="Tell me about Artificial Intelligence using Wikipedia.">
-            📚 Knowledge Lookup
+          <button class="chip" data-prompt="Look up Artificial Intelligence on Wikipedia and give me a summary.">
+            📚 Knowledge Query
           </button>
-          <button class="chip" data-prompt="Tell me a programming joke to lighten the mood.">
-            😄 Tell a Joke
+          <button class="chip" data-prompt="Convert 75 miles to kilometers and 28 Celsius to Fahrenheit.">
+            🔄 Unit Conversion
           </button>
-          <button class="chip" data-prompt="Convert 100 km to miles and 37 degrees Celsius to Fahrenheit.">
-            🔄 Unit Converter
+          <button class="chip" data-prompt="Set a timer for 2 minutes for a quick break.">
+            ⏱️ Set a Timer
           </button>
-          <button class="chip" data-prompt="Set a timer for 60 seconds labeled 'Focus Break'.">
-            ⏱️ Set Timer
-          </button>
-          <button class="chip" data-prompt="Generate a Python script for a simple web scraper.">
+          <button class="chip" data-prompt="Generate a clean Python async script with httpx.">
             💻 Generate Code
           </button>
-          <button class="chip" data-prompt="What is the current date and time? Also calculate 2^16.">
-            🧮 Math & Time
-          </button>
         </div>
       </div>
     </div>
 
-    <!-- ─── Tactical Command Input Area ────────────────────────── -->
-    <div class="input-area">
-      <div class="input-container">
-        <!-- Voice Input Microphone Button -->
-        <button id="mic-btn" class="mic-btn" title="Voice Command (Ctrl+M)">
-          <svg class="mic-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path>
-            <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
-            <line x1="12" y1="19" x2="12" y2="22"></line>
+    <!-- ─── Sleek Floating Command Bar ────────────────────────────── -->
+    <div class="input-wrapper">
+      <div class="input-card">
+        <!-- Voice Input Mic Button with Audio Wave Glow -->
+        <button id="mic-btn" class="mic-button" title="Speak (Ctrl+M)">
+          <div class="mic-wave-ring"></div>
+          <svg class="mic-svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/>
+            <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+            <line x1="12" y1="19" x2="12" y2="22"/>
           </svg>
-          <span class="mic-pulse"></span>
         </button>
 
         <textarea
           id="message-input"
-          placeholder="Speak or type tactical directives to J.A.R.V.I.S.…"
+          placeholder="Ask Aura anything or tap mic to speak…"
           rows="1"
           autofocus
         ></textarea>
 
-        <button id="send-btn" class="send-btn" disabled title="Transmit Directive (Enter)">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
+        <button id="send-btn" class="send-button" disabled title="Send (Enter)">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <line x1="22" y1="2" x2="11" y2="13"/>
+            <polygon points="22 2 15 22 11 13 2 9 22 2"/>
           </svg>
         </button>
       </div>
-      <div class="input-hud-footer">
-        <span class="hint-voice">💡 Ctrl+M for mic • Esc to stop voice • Ctrl+Shift+R to reset</span>
-        <span class="hint-status">PROTOCOL MARK VII • READY</span>
+      <div class="input-caption">
+        <span>⚡ Intelligent Agent Core</span>
+        <span class="caption-divider">•</span>
+        <span>Voice Speech-to-Speech</span>
+        <span class="caption-divider">•</span>
+        <span>12 Autonomous Tools</span>
       </div>
     </div>
   </main>
+
+  <!-- ─── Slide-over Task Activity Drawer ────────────────────────── -->
+  <aside class="task-drawer" id="task-drawer">
+    <div class="drawer-header">
+      <div class="drawer-title">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+        </svg>
+        <h3>Performed Tasks & Actions</h3>
+      </div>
+      <button id="close-drawer-btn" class="close-btn" title="Close Drawer">&times;</button>
+    </div>
+    <div class="drawer-content">
+      <div class="drawer-empty" id="drawer-empty">
+        <div class="empty-icon">⚙️</div>
+        <p>No tasks performed yet.</p>
+        <span>Ask for system diagnostics, weather, Wikipedia search, or conversions to see live actions here.</span>
+      </div>
+      <div class="task-timeline" id="task-timeline"></div>
+    </div>
+  </aside>
+
+  <!-- Backdrop overlay when drawer is open -->
+  <div class="drawer-backdrop hidden" id="drawer-backdrop"></div>
 
   <script src="/static/app.js"></script>
 </body>
